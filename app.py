@@ -4,7 +4,6 @@ import streamlit as st
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import accuracy_score, classification_report
 import joblib
 
 # Load the trained model if available
@@ -66,14 +65,10 @@ if uploaded_file is not None:
         # Step 7: Predictions on test data
         X_test_scaled = scaler.transform(X_test)
         y_pred = model.predict(X_test_scaled)
-        accuracy = accuracy_score(y_test, y_pred)
         
-        st.write(f"### Model Accuracy: {accuracy:.2f}")
-
         # Optional: Display classification report
-        report = classification_report(y_test, y_pred, output_dict=True)
-        st.write("### Classification Report")
-        st.write(pd.DataFrame(report).transpose())
+        st.write("### Predictions on Test Data")
+        st.write(pd.DataFrame({'Actual': y_test, 'Predicted': y_pred}))
 
         # Step 8: Real-time predictions using user inputs
         st.write("### Predict Dropout for a New Student")
@@ -163,19 +158,15 @@ if uploaded_file is not None:
         # Make predictions
         if st.button('Predict'):
             prediction = model.predict(input_data_scaled)
-            probabilities = model.predict_proba(input_data_scaled)
 
-            if probabilities.shape[1] > 1:  # Check if there are two classes
-                probability = probabilities[0][1]  # Probability of dropout
-                if prediction[0] == 1:
-                    st.warning(f"The student is at risk of dropping out with a probability of {probability:.2f}.")
-                else:
-                    st.success(f"The student is not at risk of dropping out with a probability of {1 - probability:.2f}.")
+            if prediction[0] == 1:
+                st.warning("The student is at risk of dropping out.")
             else:
-                st.error("Model predicts only one class. Unable to provide probability.")
+                st.success("The student is not at risk of dropping out.")
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
 
 
    
