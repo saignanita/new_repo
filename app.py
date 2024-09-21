@@ -8,25 +8,17 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 # Load the dataset
-data = pd.read_csv(r"student dropout.csv")
+data = pd.read_csv(r"student_dropout.csv")
 
 # Convert 'Dropped_Out' to binary (assuming 'False' and 'True' as strings)
 data['Dropped_Out'] = data['Dropped_Out'].apply(lambda x: 1 if x == 'True' else 0)
-
-# Check the current class distribution
-print("Original class distribution:")
-print(data['Dropped_Out'].value_counts())
 
 # Simulate dropout cases to balance the dataset
 num_dropouts = int(0.2 * len(data))
 dropout_indices = np.random.choice(data.index, num_dropouts, replace=False)
 data.loc[dropout_indices, 'Dropped_Out'] = 1
 
-# Verify the new class distribution
-print("New class distribution after simulating dropouts:")
-print(data['Dropped_Out'].value_counts())
-
-# Proceed with data preprocessing
+# Define feature columns
 X = data.drop(columns=['Dropped_Out'])  # Features
 y = data['Dropped_Out']  # Target
 
@@ -36,9 +28,11 @@ binary_columns = ['Gender', 'Address', 'Family_Size', 'Parental_Status',
                   'Extra_Curricular_Activities', 'Attended_Nursery', 
                   'Wants_Higher_Education', 'Internet_Access', 'In_Relationship']
 
-le = LabelEncoder()
+le_dict = {}
 for col in binary_columns:
+    le = LabelEncoder()
     X[col] = le.fit_transform(X[col])
+    le_dict[col] = le  # Save the encoder for each binary column
 
 # One-hot encoding for categorical features with multiple categories
 X = pd.get_dummies(X, columns=['School', 'Mother_Job', 'Father_Job', 
@@ -54,20 +48,20 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratif
 model = RandomForestClassifier(random_state=42)
 model.fit(X_train, y_train)
 
-# Make predictions and evaluate the model
-y_pred = model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-classification_rep = classification_report(y_test, y_pred)
-conf_matrix = confusion_matrix(y_test, y_pred)
-
-print(f"Accuracy: {accuracy:.4f}")
-print("Classification Report:")
-print(classification_rep)
-print("Confusion Matrix:")
-print(conf_matrix)
+# Save the trained model, features, and encoders
+joblib.dump(model, r'random_forest_model.pkl')
+joblib.dump(feature_names, r'model_features.pkl')
+joblib.dump(le_dict, r'label_encoders.pkl')
 
 # Streamlit app
-# Load the model and features
+def load_model():
+    return joblib.load(r'random_forest_model.pkl')
+
+def load_features():
+    return joblib.load(r'model_features.pkl')
+
+def load_label_encoders():
+    return joblib.load(r'label_encoders.pkl')
 
 st.title("Student Dropout Prediction App")
 
@@ -137,10 +131,14 @@ input_data = pd.DataFrame({
     'Guardian': [guardian],
 })
 
-# Preprocess the input data
-for col in binary_columns:
-    input_data[col] = le.fit_transform(input_data[col])
+# Load encoders
+encoders = load_label_encoders()
 
+# Apply label encoding
+for col in binary_columns:
+    input_data[col] = encoders[col].transform(input_data[col])
+
+# One-hot encoding for input categorical features
 input_data = pd.get_dummies(input_data, columns=['School', 'Mother_Job', 'Father_Job', 
                                                  'Reason_for_Choosing_School', 'Guardian'], drop_first=True)
 
@@ -161,3 +159,4 @@ if st.button('Predict'):
         st.warning(f"The student is at risk of dropping out with a probability of {probability:.2f}.")
     else:
         st.success(f"The student is not at risk of dropping out with a probability of {1 - probability:.2f}.")
+
