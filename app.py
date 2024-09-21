@@ -54,10 +54,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratif
 model = RandomForestClassifier(random_state=42)
 model.fit(X_train, y_train)
 
-# Save the trained model and features
-joblib.dump(model, r'random_forest_model.pkl')
-joblib.dump(feature_names, r'model_features.pkl')
-
 # Make predictions and evaluate the model
 y_pred = model.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
@@ -72,11 +68,6 @@ print(conf_matrix)
 
 # Streamlit app
 # Load the model and features
-def load_model():
-    return joblib.load(r'C:\Users\Vivek\Desktop\ml_proj\random_forest_model.pkl')
-
-def load_features():
-    return joblib.load(r'C:\Users\Vivek\Desktop\ml_proj\model_features.pkl')
 
 st.title("Student Dropout Prediction App")
 
