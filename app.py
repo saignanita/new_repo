@@ -161,16 +161,18 @@ if uploaded_file is not None:
         input_data_scaled = scaler.transform(input_data)
 
         # Make predictions
+# Make predictions
         if st.button('Predict'):
             prediction = model.predict(input_data_scaled)
-            probability = model.predict_proba(input_data_scaled)[0][1]  # Probability of dropout
-
-            if prediction[0] == 1:
-                st.warning(f"The student is at risk of dropping out with a probability of {probability:.2f}.")
+            probabilities = model.predict_proba(input_data_scaled)
+        
+            if probabilities.shape[1] > 1:  # Check if there are two classes
+                probability = probabilities[0][1]  # Probability of dropout
+                if prediction[0] == 1:
+                    st.warning(f"The student is at risk of dropping out with a probability of {probability:.2f}.")
+                else:
+                    st.success(f"The student is not at risk of dropping out with a probability of {1 - probability:.2f}.")
             else:
-                st.success(f"The student is not at risk of dropping out with a probability of {1 - probability:.2f}.")
+                st.error("Model predicts only one class. Unable to provide probability.")
 
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-
-
+   
