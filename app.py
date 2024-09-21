@@ -105,17 +105,11 @@ input_data = pd.get_dummies(input_data, columns=['School', 'Mother_Job', 'Father
                                                  'Reason_for_Choosing_School', 'Guardian'], drop_first=True)
 
 # Align input data with model's features
-def load_features():
-    return joblib.load(r'model_features.pkl')
-
-def load_model():
-    return joblib.load(r'random_forest_model.pkl')
-
-features = load_features()
-input_data = input_data.reindex(columns=features, fill_value=0)
+feature_names = joblib.load(r'model_features.pkl')
+input_data = input_data.reindex(columns=feature_names, fill_value=0)
 
 # Load the model
-model = load_model()
+model = joblib.load(r'random_forest_model.pkl')
 
 # Predict and display results
 if st.button('Predict'):
