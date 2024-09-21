@@ -40,9 +40,11 @@ if uploaded_file is not None:
                           'Extra_Curricular_Activities', 'Attended_Nursery', 
                           'Wants_Higher_Education', 'Internet_Access', 'In_Relationship']
 
-        le = LabelEncoder()
+        le_dict = {}
         for col in binary_columns:
+            le = LabelEncoder()
             X[col] = le.fit_transform(X[col])
+            le_dict[col] = le  # Store the LabelEncoder for each column
 
         # One-hot encoding for categorical features with multiple categories
         X = pd.get_dummies(X, columns=['School', 'Mother_Job', 'Father_Job', 
@@ -144,7 +146,10 @@ if uploaded_file is not None:
 
         # Preprocess the input data
         for col in binary_columns:
-            input_data[col] = le.transform(input_data[col])
+            if input_data[col].iloc[0] in le_dict[col].classes_:
+                input_data[col] = le_dict[col].transform(input_data[col])
+            else:
+                input_data[col] = np.nan  # Handle unseen labels by setting to NaN
 
         input_data = pd.get_dummies(input_data, columns=['School', 'Mother_Job', 'Father_Job', 
                                                          'Reason_for_Choosing_School', 'Guardian'], drop_first=True)
@@ -167,4 +172,5 @@ if uploaded_file is not None:
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
 
